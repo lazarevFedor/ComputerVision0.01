@@ -8,9 +8,6 @@ from skimage.io import imread, imsave
 from skimage.transform import resize
 from skimage.morphology import dilation, disk
 from skimage.draw import polygon_perimeter
-
-
-
 #Количество классов - фон + число объектов, которые нужно распознать
 CLASSES = 2
 #Цвета которыми нужно подсветить объекты
@@ -69,11 +66,9 @@ def augmentate_images(image, masks):
     masks = tf.image.resize(masks, SAMPLE_SIZE)
 
     return image, masks
-
-
 #Загрузка данных с диска
-images = sorted(glob.glob("img/*.jpg"))
-masks = sorted(glob.glob("masks/*.png"))
+images = sorted(glob.glob())
+masks = sorted(glob.glob())
 #Формирование набора данных из изображений и масок
 images_dataset = tf.data.Dataset.from_tensor_slices(images)
 masks_dataset = tf.data.Dataset.from_tensor_slices(masks)
@@ -83,5 +78,5 @@ dataset = tf.data.Dataset.zip((images_dataset, masks_dataset))
 dataset = dataset.map(load_images, num_parallel_calls=tf.data.AUTOTUNE)
 #Искусственное увеличение объема данных путем копирования уже имеющихся изображений
 dataset = dataset.repeat(60)
-#Аугментация всех данных, теперь каждое изображение 'уникально'
+#Аугментация всех данных, теперб каждое изображение 'уникально'
 dataset = dataset.map(augmentate_images, num_parallel_calls=tf.data.AUTOTUNE)
