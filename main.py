@@ -2,23 +2,20 @@ import os
 import glob
 import numpy as np
 import tensorflow as tf
+# from tensorflow import data
 import matplotlib.pyplot as plt
 from skimage import measure
 from skimage.io import imread, imsave
 from skimage.transform import resize
 from skimage.morphology import dilation, disk
 from skimage.draw import polygon_perimeter
-#Количество классов - фон + число объектов, которые нужно распознать
+
 CLASSES = 2
-#Цвета которыми нужно подсветить объекты
 COLORS = ['black', 'violet']
-#Размеры входного изображения, которое будет обрабатываться нейронкой
 SAMPLE_SIZE = (256, 256)
-#Размеры выходного изображения, которое будет сформировано после всех обработок
 OUTPUT_SIZE = (1080, 1920)
 
 
-#Функция загрузки изображения и маски, их последующей обработки
 def load_images(image, mask):
     #Считывание изображения и возврат тензора со строкой байтов, представляющей содержимое файла
     image = tf.io.read_file(image)
@@ -51,7 +48,6 @@ def load_images(image, mask):
     return image, masks
 
 
-#Функция для аугментации данных - искусственное увеличение набора данных
 def augmentate_images(image, masks):
     random_crop = tf.random.uniform((), 0.3, 1)
     image = tf.image.central_crop(image, random_crop)
@@ -66,9 +62,12 @@ def augmentate_images(image, masks):
     masks = tf.image.resize(masks, SAMPLE_SIZE)
 
     return image, masks
+
+
 #Загрузка данных с диска
-images = sorted(glob.glob())
-masks = sorted(glob.glob())
+images = sorted(glob.glob("img/*.jpg"))
+masks = sorted(glob.glob("masks/*.png"))
+
 #Формирование набора данных из изображений и масок
 images_dataset = tf.data.Dataset.from_tensor_slices(images)
 masks_dataset = tf.data.Dataset.from_tensor_slices(masks)
@@ -78,5 +77,29 @@ dataset = tf.data.Dataset.zip((images_dataset, masks_dataset))
 dataset = dataset.map(load_images, num_parallel_calls=tf.data.AUTOTUNE)
 #Искусственное увеличение объема данных путем копирования уже имеющихся изображений
 dataset = dataset.repeat(60)
-#Аугментация всех данных, теперб каждое изображение 'уникально'
+#Аугментация всех данных, теперь каждое изображение 'уникально'
 dataset = dataset.map(augmentate_images, num_parallel_calls=tf.data.AUTOTUNE)
+print(1)
+images_and_masks = list(dataset.take(5))
+
+print(1)
+
+fig, ax = plt.subplots(nrows=2, ncols=5, figsize=(16, 6))
+
+for i, (image, masks) in enumerate(images_and_masks):
+    ax[0, i].set_title('Image')
+    ax[0, i].set_axis_off()
+    ax[0, i].imshow(image)
+
+    ax[1, i].set_title('Mask')
+    ax[1, i].set_axis_off()
+    ax[1, i].imshow(image / 1.5)
+
+    for channel in range(CLASSES):
+        contours = measure.find_contours(np.array(masks[:, :, channel]))
+        for contour in contours:
+            ax[1, i].plot(contour[:, 1], contour[:, 0], linewidth=1, color=COLORS[channel])
+
+print("meow")
+plt.show()
+plt.close()
